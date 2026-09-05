@@ -1,0 +1,14 @@
+{
+  "name": "buscador-sem-filtro",
+  "version": "2.0.0",
+  "private": true,
+  "description": "YouTube analytics frontend for dark and faceless channels",
+  "scripts": {
+    "check:syntax": "node scripts/check-js-syntax.cjs",
+    "test": "node --test tests/vault.test.cjs tests/utils.test.cjs tests/models.test.cjs tests/repository.test.cjs",
+    "check": "npm run check:syntax && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

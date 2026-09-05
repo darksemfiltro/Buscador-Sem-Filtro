@@ -153,17 +153,11 @@
   // Com Authorization: Bearer KEY quando auth==='bearer'. 404/CORS/falha => throw (fallback).
   var OAI_BASES = {
     huggingface: 'https://router.huggingface.co',
-    nvidia: 'https://integrate.api.nvidia.com',
-    ollama_cloud: 'https://ollama.com',
     llm7: 'https://api.llm7.io'
   };
   // Modelos com 200 OK no health-check (só esses listam; resto excluído).
   var LIVE_RESPONDERS = {
     llm7: ['codestral-latest', 'gpt-oss', 'minimax-m2.7', 'mistral-Nemo-Instruct-2407']
-  };
-  // Filtro Free por provider (tokens oficiais; substring match no id)
-  var LIVE_FREE_TOKENS = {
-    ollama_cloud: ['gemma4:31b', 'gpt-oss:120b', 'gpt-oss:20b', 'nemotron-3-nano:30b', 'nemotron-3-super', 'nemotron-3-ultra']
   };
   function shortName(id) {
     var s = String(id || '');
@@ -189,8 +183,6 @@
         // llm7: SOMENTE validados no health-check (health 2026-09-03, 44 modelos).
         var exact = LIVE_RESPONDERS[providerId];
         if (exact) return exact.indexOf(m.id) !== -1;
-        var toks = LIVE_FREE_TOKENS[providerId];
-        if (toks) return toks.some(function (t) { return m.id.indexOf(t) !== -1; });
         return true;
       });
     };
@@ -200,8 +192,6 @@
     openrouter: fetchOpenRouter,
     gemini: fetchGemini,
     huggingface: makeOpenAIAdapter('huggingface'),
-    nvidia: makeOpenAIAdapter('nvidia'),
-    ollama_cloud: makeOpenAIAdapter('ollama_cloud'),
     llm7: makeOpenAIAdapter('llm7')
   };
 

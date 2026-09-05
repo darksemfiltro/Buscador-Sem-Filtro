@@ -147,40 +147,6 @@ const AI_PROVIDERS = {
     parseResp: (d) => d.choices?.[0]?.message?.content || '',
     auth: 'bearer',
   },
-  nvidia: {
-    name: 'NVIDIA NIM',
-    keyLabel: 'NVIDIA API Key — build.nvidia.com',
-    freeInfo: '1000 creditos gratis. <a href="https://build.nvidia.com/explore/discover" target="_blank" style="color:var(--primary)">Crie sua chave aqui</a>.',
-    models: [
-      { id:'meta/llama-3.3-70b-instruct', name:'Llama 3.3 70B', free:true },
-      { id:'meta/llama-3.1-8b-instruct', name:'Llama 3.1 8B', free:true },
-      { id:'mistralai/mistral-small-24b-instruct-2501', name:'Mistral Small 24B', free:true },
-      { id:'deepseek-ai/deepseek-r1', name:'DeepSeek R1', free:true },
-      { id:'google/gemma-3-27b-it', name:'Gemma 3 27B', free:true },
-    ],
-    endpoint: () => 'https://integrate.api.nvidia.com/v1/chat/completions',
-    buildBody: (prompt, model) => ({ model, messages:[{role:'user',content:prompt}], max_tokens:4000 }),
-    parseResp: (d) => d.choices?.[0]?.message?.content || '',
-    auth: 'bearer',
-  },
-  ollama_cloud: {
-    name: 'Ollama (Cloud)',
-    keyLabel: 'Chave API Ollama Cloud — ollama.com/settings/keys',
-    freeInfo: 'Utilizar a api do <a href="https://docs.ollama.com/cloud" target="_blank" style="color:var(--primary)">Ollama Cloud</a>. Lista ao vivo via ollama.com/v1/models, filtrada p/ modelos Free.',
-    // fallback gerado em 2026-09-03 via GET https://ollama.com/v1/models (só Free retos da lista oficial)
-    models: [
-      { id:'gemma4:31b', name:'Gemma 4 31B', free:true },
-      { id:'gpt-oss:120b', name:'GPT-OSS 120B', free:true },
-      { id:'gpt-oss:20b', name:'GPT-OSS 20B', free:true },
-      { id:'nemotron-3-nano:30b', name:'Nemotron 3 Nano 30B', free:true },
-      { id:'nemotron-3-super', name:'Nemotron 3 Super', free:true },
-      { id:'nemotron-3-ultra', name:'Nemotron 3 Ultra', free:true },
-    ],
-    endpoint: () => 'https://ollama.com/v1/chat/completions',
-    buildBody: (prompt, model) => ({ model, messages:[{role:'user',content:prompt}], stream:false }),
-    parseResp: (d) => d.choices?.[0]?.message?.content || '',
-    auth: 'bearer',
-  },
   llm7: {
     name: 'LLM7.io (Gratis)',
     keyLabel: 'Chave API llm7 (opcional; libera modelos Pro) — cole o token',
@@ -254,7 +220,16 @@ function calcVidsPerWeek(totalVids, createdAt) {
   return parseFloat((totalVids / weeks).toFixed(1));
 }
 
+function isVaultLocked() {
+  try {
+    return !!(window.Vault && Vault.exists() && !Vault.isUnlocked());
+  } catch (e) {
+    return false;
+  }
+}
+
 function getYTKey() {
+  if (isVaultLocked()) return '';
   const input = document.getElementById('apiKey')?.value.trim() || '';
   if (input) return input;
   try {
@@ -277,6 +252,7 @@ function getAIProvider() {
   return localStorage.getItem('bsf_aiProvider') || 'llm7';
 }
 function getAIKeysMap() {
+  if (isVaultLocked()) return {};
   try {
     if (window.Vault && Vault.isUnlocked()) {
       const s = Vault.snapshot();
@@ -289,7 +265,17 @@ function getAIKeysMap() {
   } catch(e) {}
   return {};
 }
+
+function updateAIKeysMap(current, providerId, keyValue) {
+  const next = Object.assign({}, current || {});
+  const prov = AI_PROVIDERS[providerId];
+  if (prov && prov.auth === 'none' && !prov.optionalKey) delete next[providerId];
+  else next[providerId] = keyValue || '';
+  return next;
+}
+
 function getAIKey(providerId = getAIProvider()) {
+  if (isVaultLocked()) return '';
   const p = providerId || getAIProvider();
   const inputVal = document.getElementById('aiKey')?.value.trim() || '';
   if (inputVal) return inputVal;
