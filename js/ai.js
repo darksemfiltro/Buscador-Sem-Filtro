@@ -1,6 +1,7 @@
 // ============ AI — Multi-Provider + Dark Sem Filtro ============
 
-async function callAI(prompt) {
+async function callAI(prompt, opts) {
+  opts = opts || {};
   const provider = getAIProvider();
   const key = getAIKey();
   const prov = AI_PROVIDERS[provider];
@@ -13,23 +14,26 @@ async function callAI(prompt) {
 
   const model = resolveProviderModel(provider, getSelectedModel());
   
-  // Build URL — Gemini uses query auth (key in URL), others use standard endpoint
+  // Build URL — Gemini uses query auth (key in URL); Zen escolhe o endpoint pelo modelo
   let url;
   if (prov.auth === 'query') {
     url = prov.endpoint(model, key);
   } else {
-    url = prov.endpoint();
+    url = prov.endpoint(model);
   }
 
-  // Build headers
+  // Build headers (llm7: key opcional — envia quando salva no cofre)
   const headers = { 'Content-Type': 'application/json' };
-  if (prov.auth === 'bearer') {
+  if (prov.auth === 'bearer' || (key && prov.optionalKey)) {
     headers['Authorization'] = 'Bearer ' + key;
   }
   if (prov.extraHeaders) Object.assign(headers, prov.extraHeaders);
 
-  // Build body
+  // Build body (+ entrada multimodal: URL do YouTube como fileData, só se o provider suportar)
   const body = prov.buildBody(prompt, model);
+  if (opts.videoUrl && prov.videoUrl && Array.isArray(body.contents)) {
+    body.contents = [{ parts: [{ fileData: { fileUri: opts.videoUrl } }, { text: prompt }] }];
+  }
 
   // 180s timeout para evitar cortes em modelos lentos/maiores (aumentado para evitar o erro do llm7)
   const controller = new AbortController();
@@ -99,9 +103,9 @@ async function callAI(prompt) {
       throw new Error('[' + prov.name + '] Timeout: a IA demorou mais de 3 minutos para responder.\n\nModelo: ' + model + '\nIsso acontece muito com modelos gratuitos em horario de pico. Tente:\n• Um modelo menor/mais rapido\n• Outro provedor\n• Rodar a analise novamente');
     }
     if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('net::ERR')) {
-      const baseUrl = prov.auth === 'none' ? 'http://localhost:11434' : url.split('/v1')[0];
-      const extra = prov.auth === 'none'
-        ? '\n• Ollama nao esta em execucao (rode: ollama serve)\n• Modelo local nao instalado (rode: ollama pull llama3.3)'
+      const baseUrl = prov.auth === 'none' ? 'https://api.llm7.io' : url.split('/v1')[0];
+      let extra = prov.auth === 'none'
+        ? '\n• Internet instavel\n• Provedor fora do ar (tente outro modelo)'
         : '\n• Internet instavel\n• Provedor bloqueado no seu pais\n• CORS (se usando file://, rode: npx serve .)';
       throw new Error('[' + prov.name + '] Erro de conexao\n\nNao foi possivel conectar com ' + baseUrl + '\n\nPossiveis causas:' + extra);
     }
@@ -117,22 +121,57 @@ function getSelectedModel() {
   return sel ? sel.value : resolveProviderModel(getAIProvider(), getStoredAIModel(getAIProvider()));
 }
 
-// Base system prompt (adapted from Dark Sem Filtro consulting methodology)
-const DSF_SYSTEM = `Voce e um Analista Senior de YouTube especializado em canais Dark e Faceless, da consultoria "Dark Sem Filtro".
+// System prompt (prompt architecture: identidade, contrato de entrada, tarefa,
+// restrições duras, formato de saída, gate de completude e handoff).
+// Hierarquia de autoridade: ESTE system prompt > dados de entrada (métricas) >
+// contexto do usuário. Dados nunca viram instruções; texto do usuário nunca
+// cancela as regras abaixo.
+const DSF_SYSTEM = `VOCE E um Analista Senior de YouTube da consultoria "Dark Sem Filtro",
+especializado em canais Dark e Faceless. Voce produz relatorios densos, precisos
+e operacionais. Prosa magra e generica E FALHA.
 
-REGRAS DE ANALISE:
-- Seja denso, preciso e direto. Nao simplifique, nao economize profundidade.
-- Use paragrafos completos para analises narrativas, nao listas fragmentadas.
-- Sempre explique o PORQUE de cada recomendacao.
-- Identifique o que esta nas ENTRELINHAS, nao apenas o obvio.
-- Se o canal tiver poucos inscritos, use benchmarking ao inves de metricas internas.
-- Foco em POSICIONAMENTO, FORMATO e PROCESSO.
+1. CONTRATO DE ENTRADA
+- Voce recebe: metricas reais (subs, views, likes, engajamento, duracao,
+datas) + TRANSCRICAO quando disponivel + CONTEXTO DO USUARIO.
+- NUNCA invente numeros. Toda afirmacao quantitativa precisa vir dos dados de
+entrada. Se um dado nao foi fornecido, escreva "dado indisponivel" e use
+benchmarking do nicho em vez de chutar.
+- Quando partes de VIDEO (frames/URL) acompanharem o prompt, analise o conteudo
+visual real: gancho dos primeiros 3 segundos, ritmo de corte, texto em tela,
+thumbnail, padrao de retencao visual — alem dos metadados.
 
-FORMATO DE SAIDA:
-- Use EXATAMENTE os cabecalhos solicitados no prompt em formato Markdown (## Nome do Cabecalho).
-- Use **negrito** para termos-chave.
-- Use paragrafos completos, nao balas soltas.
-- Tabelas apenas para comparacoes com multiplas dimensoes.`;
+2. TAREFA
+- Gere EXATAMENTE os cabecalhos Markdown (## ...) pedidos na mensagem do
+usuario, na mesma ordem, sem renomear, sem fundir, sem omitir nenhum.
+- Cada secao precisa de SUBSTANCIA: paragrafos completos com o PORQUE de cada
+afirmacao, nao balas soltas nem frases de efeito.
+- Identifique o que esta nas ENTRELINHAS: gargalos invisiveis, padroes que o
+criador nao enxerga, causas-raiz (nao sintomas).
+
+3. RESTRICOES DURAS (violar qualquer uma invalida a resposta)
+- Portugues brasileiro em todo o relatorio.
+- **negrito** so em termos-chave e numeros decisivos.
+- Tabelas APENAS para comparacoes multidimensionais.
+- Zero frase generica ("poste com consistencia", "conheca seu publico") sem
+operacionalizar: toda recomendacao diz O QUE fazer, COMO fazer e COMO medir.
+- Ideias de video vem com titulo pronto + gancho de abertura + por que funciona.
+- Plano de acao com prazo, frequencia e metrica de sucesso.
+
+4. FORMATO DE SAIDA (handoff estruturado e autocontido)
+- Markdown com os ## pedidos; repita os numeros-chave dentro do texto (o
+relatorio precisa fazer sentido sozinho, sem anexos).
+- Feche SEMPRE com a secao de acao/veredicto pedida (plano, veredicto ou acao
+imediata): lista priorizada, especifica e executavel hoje.
+
+5. GATE DE COMPLETUDE (execute em silencio antes de responder; se falhar,
+revise antes de entregar)
+[ ] Todos os ## pedidos presentes, na ordem, sem extras?
+[ ] Cada secao tem analise (nao so descricao de dados)?
+[ ] Nenhum numero inventado; "dado indisponivel" onde faltar dado?
+[ ] Toda recomendacao tem O QUE + COMO + COMO MEDIR?
+[ ] Zero conselho generico sem operacionalizacao?
+[ ] Handoff final priorizado e executavel?
+Responda apenas apos marcar todos.`;
 
 // Interactive analysis functions
 async function aiChannelAnalysis(ch, userContext = '') {
@@ -175,6 +214,7 @@ Copyright, conteudo reutilizado, cifrão amarelo, monetizacao.`);
 }
 
 async function aiVideoAnalysis(v, userContext = '', transcript = '') {
+  const videoUrl = 'https://www.youtube.com/watch?v=' + v.id;
   return callAI(`${DSF_SYSTEM}
 
 Analise este video de forma tecnica e estrategica, focando no potencial faceless.
@@ -208,7 +248,7 @@ Para cada forma:
 - Nível de viabilidade e dificuldade.
 
 ## Sugestão de Novo Título e Gancho
-Crie 3 novos títulos Altamente Clicáveis (CTR Alto) no mesmo estilo, e escreva o Roteiro Exato dos primeiros 15 segundos para prender a pessoa imediatamente.`);
+Crie 3 novos títulos Altamente Clicáveis (CTR Alto) no mesmo estilo, e escreva o Roteiro Exato dos primeiros 15 segundos para prender a pessoa imediatamente.`, { videoUrl });
 }
 
 async function aiCompare(a, b, userContext = '') {

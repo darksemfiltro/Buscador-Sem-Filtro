@@ -987,3 +987,11 @@ footer {
   .nav-group { min-width: 100%; }
   .nav-btn { width: 100%; }
 }
+
+/* ---- BSF model combobox (reusa input/select do tema; só layout da fileira) ---- */
+.bsf-model-row { display: flex; align-items: center; gap: 8px; }
+#btnRefreshModels { width: auto; padding: 6px 10px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: var(--r); font-size: 13px; line-height: 1; }
+#btnRefreshModels:hover { color: var(--text); border-color: var(--border-hi); }
+#btnRefreshModels.bsf-spin { animation: bsf-spin 0.8s linear infinite; }
+@keyframes bsf-spin { to { transform: rotate(360deg); } }
+#modelCount { font-size: 11px; color: var(--text-dim); }

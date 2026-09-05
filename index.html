@@ -7,6 +7,7 @@
   <title>Busca Sem Filtro — YouTube Analytics Pro</title>
   <meta name="description" content="Analytics profissional de YouTube para canais dark/faceless.">
   <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2 12h4l3-9 5 18 3-9h5' stroke='%2322d3b4' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
@@ -139,6 +140,10 @@
         <div class="key-field" id="modelField">
           <label>Modelo</label>
           <select id="aiModel"></select>
+          <div class="bsf-model-row">
+            <button id="btnRefreshModels" title="Atualizar lista">↻</button>
+            <span id="modelCount"></span>
+          </div>
         </div>
         <div class="key-field key-actions">
           <label>&nbsp;</label>
@@ -486,6 +491,8 @@
   </footer>
 
   <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/models.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/pdf.js"></script>

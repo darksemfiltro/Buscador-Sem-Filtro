@@ -38,7 +38,6 @@ Clique no ícone ⚙️ no canto superior direito e preencha:
 | **LLM7.io** (recomendado) | [LLM7.io](https://llm7.io) — gratuito com limite generoso |
 | **OpenRouter** | [OpenRouter.ai](https://openrouter.ai) — diversos modelos |
 | **Gemini (Google AI)** | [Google AI Studio](https://aistudio.google.com) |
-| **Ollama Local** | [Ollama.com](https://ollama.com) — 100% gratuito e local |
 
 > 📖 Guia completo para Ollama: leia o arquivo [GUIA_OLLAMA.md](GUIA_OLLAMA.md).
 
@@ -130,7 +129,6 @@ Sem ela você consegue usar todas as ferramentas de dados, mas não os relatóri
 | **LLM7.io** (recomendado) | Gratuito com limite | [llm7.io](https://llm7.io) |
 | OpenRouter | Pay-per-use | [openrouter.ai](https://openrouter.ai) |
 | Gemini (Google AI) | Gratuito com limite | [aistudio.google.com](https://aistudio.google.com) |
-| Ollama Local | 100% gratuito | [ollama.com](https://ollama.com) |
 
 ---
 

@@ -74,6 +74,8 @@ document.addEventListener('keydown', e => {
 
 // ---- KEYS ----
 function initKeys() {
+  if (window.__bsfKeysInit) return; // idempotente: ignora 2º disparo de DOMContentLoaded
+  window.__bsfKeysInit = true;
   const ytIn = document.getElementById('apiKey');
   const aiIn = document.getElementById('aiKey');
   const provSel = document.getElementById('aiProvider');
@@ -83,8 +85,9 @@ function initKeys() {
   const hint = document.getElementById('providerHint');
   const keyLabel = document.getElementById('aiKeyLabel');
 
-  // Populate provider dropdown from AI_PROVIDERS
-  const customOrder = ['llm7', 'huggingface', 'openrouter', 'mistral', 'ollama', 'gemini', 'ollama_cloud', 'grok', 'nvidia', 'cerebras', 'cohere', 'github'];
+  // Populate provider dropdown from AI_PROVIDERS (idempotente: ignora 2º init)
+  const customOrder = ['llm7', 'openrouter', 'huggingface', 'gemini', 'ollama_cloud', 'nvidia'];
+  if (provSel.options.length === 0) {
   Object.entries(AI_PROVIDERS).sort((a,b) => {
     let ia = customOrder.indexOf(a[0]); let ib = customOrder.indexOf(b[0]);
     if(ia===-1) ia=999; if(ib===-1) ib=999;
@@ -94,6 +97,7 @@ function initKeys() {
     o.value = id; o.textContent = prov.name;
     provSel.appendChild(o);
   });
+  }
 
   let aiKeysMap = getAIKeysMap();
   const oldSingleKey = localStorage.getItem('bsf_aiKey') || '';
@@ -103,53 +107,79 @@ function initKeys() {
     localStorage.setItem('bsf_aiKeys', JSON.stringify(aiKeysMap));
   }
 
-  // Restore saved values
-  ytIn.value = localStorage.getItem('bsf_ytKey') || '';
-  provSel.value = localStorage.getItem('bsf_aiProvider') || 'llm7';
+  // Restore saved values (cofre primeiro, legacy como fallback)
+  function restoreInputs() {
+    let snap = null;
+    try { if (window.Vault && Vault.isUnlocked()) snap = Vault.snapshot(); } catch (e) {}
+    ytIn.value = (snap && snap.ytKey) || localStorage.getItem('bsf_ytKey') || '';
+    provSel.value = (snap && snap.aiProvider) || localStorage.getItem('bsf_aiProvider') || 'llm7';
+  }
+  restoreInputs();
+  try {
+    if (window.Vault && !Vault.exists() && (localStorage.getItem('bsf_ytKey') || localStorage.getItem('bsf_aiKeys') || localStorage.getItem('bsf_aiKey'))) {
+      setTimeout(() => { try { toast('Migre seu cofre: clique Salvar e crie a senha mestra.', 'error'); } catch (e) {} }, 600);
+    } else if (window.Vault && Vault.exists() && !Vault.isUnlocked()) {
+      // Cofre existe e está bloqueado: pede a senha e restaura ao desbloquear.
+      setTimeout(async () => {
+        try {
+          if (await Vault.ensureUnlocked()) { restoreInputs(); await updateProvider({ force: true }); }
+        } catch (e) {}
+      }, 600);
+    }
+  } catch (e) {}
 
-  // Populate models for selected provider
-  async function updateProvider() {
-    const prov = AI_PROVIDERS[provSel.value];
-    if (!prov) return;
-    // Update model list
+  // ---- Modelos dinâmicos (ModelRegistry) + combobox pesquisável ----
+  let modelItems = [];   // lista cheia do provider atual
+  let modelReq = 0;      // guarda contra race ao trocar de provider
+  const countEl = document.getElementById('modelCount');
+  const refreshBtn = document.getElementById('btnRefreshModels');
+
+  function toRegShape(m) {
+    return { id: m.id, name: m.name || m.id, free: m.free !== false, context: 0, pricing: '', updated: '' };
+  }
+  function hardcodedItems(pid) {
+    const p = AI_PROVIDERS[pid];
+    return ((p && p.models) || []).map(toRegShape);
+  }
+  function fmtCtx(n) {
+    n = parseInt(n) || 0;
+    if (n >= 1000) return Math.round(n / 1000) + 'k';
+    return String(n);
+  }
+  function renderModelOptions(keepValue) {
+    const items = window.ModelRegistry ? ModelRegistry.filterItems(modelItems, '') : modelItems.slice();
+    const prev = keepValue || modelSel.value || getStoredAIModel(provSel.value);
     modelSel.innerHTML = '';
-
-    // Special logic for Ollama Local: load models dynamically from local server
-    if (provSel.value === 'ollama') {
-      try {
-        const baseUrl = (aiIn.value.trim() || 'http://localhost:11434').replace(/\/$/, '') + '/api/tags';
-        const res = await fetch(baseUrl, { signal: AbortSignal.timeout(5000) });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.models && data.models.length > 0) {
-            data.models.forEach(m => {
-              const o = document.createElement('option');
-              o.value = m.name;
-              o.textContent = m.name + ' (' + (m.size / 1073741824).toFixed(1) + 'GB)';
-              modelSel.appendChild(o);
-            });
-          }
-        }
-      } catch(e) {}
-    }
-
-    // Fallback: add hardcoded models if dynamic load failed or is not ollama
-    if (modelSel.options.length === 0) {
-      prov.models.forEach(m => {
-        const o = document.createElement('option');
-        o.value = m.id;
-        o.textContent = m.name;
-        modelSel.appendChild(o);
-      });
-    }
-
-    const savedModel = getStoredAIModel(provSel.value);
-    // Only set saved model if it exists in the current list (installed models)
-    if (savedModel && Array.from(modelSel.options).some(o => o.value === savedModel)) {
-      modelSel.value = savedModel;
+    items.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.id;
+      const short = String(m.id).split('/').pop();
+      o.textContent = (m.free ? '[FREE] ' : '') + ((m.name && m.name !== m.id) ? m.name + ' · ' + short : m.id);
+      let tip = m.id;
+      if (m.context) tip += ' · ctx ' + fmtCtx(m.context);
+      if (m.pricing) tip += ' · ' + m.pricing;
+      o.title = tip;
+      modelSel.appendChild(o);
+    });
+    if (prev && Array.from(modelSel.options).some(o => o.value === prev)) {
+      modelSel.value = prev;
     } else if (modelSel.options.length > 0) {
       modelSel.value = modelSel.options[0].value;
     }
+    if (countEl) {
+      let ts = 0;
+      try { ts = ModelRegistry.cacheTs(provSel.value); } catch (e) {}
+      const hhmm = ts ? new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+      countEl.textContent = items.length + ' de ' + modelItems.length + ' modelos • atualizados ' + hhmm;
+    }
+  }
+
+  // Populate models for selected provider (mesma assinatura; dinâmica por dentro)
+  async function updateProvider(opts) {
+    opts = opts || {};
+    const prov = AI_PROVIDERS[provSel.value];
+    if (!prov) return;
+    const my = ++modelReq;
 
     aiKeysMap = getAIKeysMap();
     aiIn.value = aiKeysMap[provSel.value] || '';
@@ -160,18 +190,31 @@ function initKeys() {
 
     // Always show model field
     modelField.style.display = 'flex';
-    // Show key field for Ollama local (used for custom URL)
-    if (provSel.value === 'ollama') {
-      aiIn.closest('.key-field').style.display = 'flex';
-      aiIn.placeholder = "http://localhost:11434";
-      aiIn.type = "text";
-    } else {
-      aiIn.closest('.key-field').style.display = prov.auth === 'none' ? 'none' : 'flex';
-      aiIn.placeholder = "Chave da API...";
-      aiIn.type = "password";
-    }
+    // llm7 tem key opcional: campo visível mesmo com auth 'none'
+    const needKey = prov.auth !== 'none' || !!prov.optionalKey;
+    aiIn.closest('.key-field').style.display = needKey ? 'flex' : 'none';
+    aiIn.placeholder = provSel.value === 'llm7' ? 'Token llm7 (opcional)...' : 'Chave da API...';
+    aiIn.type = 'password';
+
+    // Render imediato com fallback (select nunca vazio), depois lista ao vivo
+    modelItems = hardcodedItems(provSel.value);
+    renderModelOptions(getStoredAIModel(provSel.value));
+    if (!window.ModelRegistry) return;
+    try {
+      const live = await ModelRegistry.list(provSel.value, { force: !!opts.force });
+      if (my !== modelReq) return;
+      if (live && live.length) {
+        modelItems = live;
+        renderModelOptions(modelSel.value);
+      }
+    } catch (e) { /* registry já deu toast de fallback */ }
   }
-  provSel.addEventListener('change', updateProvider);
+  provSel.addEventListener('change', () => updateProvider());
+  if (refreshBtn) refreshBtn.addEventListener('click', async () => {
+    refreshBtn.classList.add('bsf-spin');
+    try { await updateProvider({ force: true }); }
+    finally { refreshBtn.classList.remove('bsf-spin'); }
+  });
   updateProvider();
 
   function checkWarning() { warn.classList.toggle('hidden', !!ytIn.value.trim()); }
@@ -182,46 +225,56 @@ function initKeys() {
   document.getElementById('toggleAiVis').onclick = () => { aiIn.type = aiIn.type === 'password' ? 'text' : 'password'; };
 
   document.getElementById('btnClearCache').onclick = () => {
-    if (confirm('Tem certeza que deseja apagar todas as chaves e limpar o cache da ferramenta?')) {
-      localStorage.clear();
-      toast('Cache limpo com sucesso! A página será recarregada.');
+    if (confirm('Tem certeza que deseja apagar o cofre, as chaves e o cache de modelos? (favoritos mantidos)')) {
+      try { if (window.Vault) Vault.clearAll(); } catch (e) {}
+      toast('Cofre e cache limpos! A página será recarregada.');
       setTimeout(() => location.reload(), 1500);
     }
   };
 
   document.getElementById('btnSaveKeys').onclick = async () => {
+    try {
+      if (window.Vault && !await Vault.ensureUnlocked()) return;
+    } catch (e) { toast('Falha no cofre: ' + e.message, 'error'); return; }
     const providerId = provSel.value;
     const prov = AI_PROVIDERS[providerId];
     const keyVal = aiIn.value.trim();
     aiKeysMap = getAIKeysMap();
-    if (prov && prov.auth === 'none' && providerId !== 'ollama') delete aiKeysMap[providerId];
+    if (prov && prov.auth === 'none') delete aiKeysMap[providerId];
     else aiKeysMap[providerId] = keyVal;
-    const modelMapRaw = localStorage.getItem('bsf_aiModels');
     let modelMap = {};
-    if (modelMapRaw) {
-      try {
-        const parsed = JSON.parse(modelMapRaw);
-        if (parsed && typeof parsed === 'object') modelMap = parsed;
-      } catch(e) {}
-    }
+    try {
+      if (window.Vault && Vault.isUnlocked()) modelMap = Vault.snapshot().aiModels || {};
+      else modelMap = JSON.parse(localStorage.getItem('bsf_aiModels') || '{}') || {};
+    } catch(e) {}
     modelMap[providerId] = resolveProviderModel(providerId, modelSel.value);
-    localStorage.setItem('bsf_ytKey', ytIn.value.trim());
-    localStorage.setItem('bsf_aiKeys', JSON.stringify(aiKeysMap));
-    localStorage.setItem('bsf_aiProvider', providerId);
-    localStorage.setItem('bsf_aiModel', modelMap[providerId]);
-    localStorage.setItem('bsf_aiModels', JSON.stringify(modelMap));
+    const payload = { ytKey: ytIn.value.trim(), aiKeys: aiKeysMap, aiModels: modelMap, aiProvider: providerId };
+    try {
+      if (window.Vault && Vault.isUnlocked()) {
+        await Vault.saveAll(payload);
+      } else {
+        // sem WebCrypto: legacy em plaintext
+        localStorage.setItem('bsf_ytKey', payload.ytKey);
+        localStorage.setItem('bsf_aiKeys', JSON.stringify(aiKeysMap));
+        localStorage.setItem('bsf_aiProvider', providerId);
+        localStorage.setItem('bsf_aiModel', modelMap[providerId]);
+        localStorage.setItem('bsf_aiModels', JSON.stringify(modelMap));
+      }
+    } catch (e) { toast('Falha ao salvar: ' + e.message, 'error'); return; }
     aiIn.value = aiKeysMap[providerId] || '';
     checkWarning();
-    
-    if (providerId === 'ollama') {
-      await updateProvider(); // reload models dynamically based on new url
+
+    if (providerId === 'gemini') {
+      await updateProvider({ force: true }); // key nova: ignora fallback cacheado
     }
-    
-    toast('Chaves salvas!', 'success');
+
+    toast('Chaves salvas no cofre!', 'success');
   };
   document.getElementById('btnTestKeys').onclick = async () => {
-    let ytKey = document.getElementById('apiKey')?.value.trim();
-    if (!ytKey && localStorage.getItem('bsf_ytKey')) ytKey = localStorage.getItem('bsf_ytKey');
+    try {
+      if (window.Vault && !Vault.isUnlocked() && !await Vault.ensureUnlocked()) return;
+    } catch (e) { toast('Falha no cofre: ' + e.message, 'error'); return; }
+    let ytKey = getYTKey();
     if (!ytKey) return toast('Insira a chave do YouTube primeiro.');
     modalLoading('Testando conexões...');
     try {
