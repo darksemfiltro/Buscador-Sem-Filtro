@@ -76,6 +76,11 @@
     _key = null;
     _data = null;
     if (_timer) { clearTimeout(_timer); _timer = null; }
+    try {
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('bsf:vault-locked'));
+      }
+    } catch (e) {}
   }
 
   function exists() {

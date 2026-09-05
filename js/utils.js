@@ -254,7 +254,16 @@ function calcVidsPerWeek(totalVids, createdAt) {
   return parseFloat((totalVids / weeks).toFixed(1));
 }
 
+function isVaultLocked() {
+  try {
+    return !!(window.Vault && Vault.exists() && !Vault.isUnlocked());
+  } catch (e) {
+    return false;
+  }
+}
+
 function getYTKey() {
+  if (isVaultLocked()) return '';
   const input = document.getElementById('apiKey')?.value.trim() || '';
   if (input) return input;
   try {
@@ -277,6 +286,7 @@ function getAIProvider() {
   return localStorage.getItem('bsf_aiProvider') || 'llm7';
 }
 function getAIKeysMap() {
+  if (isVaultLocked()) return {};
   try {
     if (window.Vault && Vault.isUnlocked()) {
       const s = Vault.snapshot();
@@ -290,6 +300,7 @@ function getAIKeysMap() {
   return {};
 }
 function getAIKey(providerId = getAIProvider()) {
+  if (isVaultLocked()) return '';
   const p = providerId || getAIProvider();
   const inputVal = document.getElementById('aiKey')?.value.trim() || '';
   if (inputVal) return inputVal;

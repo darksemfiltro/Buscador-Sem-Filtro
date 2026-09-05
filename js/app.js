@@ -221,6 +221,11 @@ function initKeys() {
   checkWarning();
   ytIn.addEventListener('input', checkWarning);
   aiIn.addEventListener('input', checkWarning);
+  window.addEventListener('bsf:vault-locked', () => {
+    ytIn.value = '';
+    aiIn.value = '';
+    checkWarning();
+  });
   document.getElementById('toggleYtVis').onclick = () => { ytIn.type = ytIn.type === 'password' ? 'text' : 'password'; };
   document.getElementById('toggleAiVis').onclick = () => { aiIn.type = aiIn.type === 'password' ? 'text' : 'password'; };
 
