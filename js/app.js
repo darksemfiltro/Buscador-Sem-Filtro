@@ -244,9 +244,7 @@ function initKeys() {
     const providerId = provSel.value;
     const prov = AI_PROVIDERS[providerId];
     const keyVal = aiIn.value.trim();
-    aiKeysMap = getAIKeysMap();
-    if (prov && prov.auth === 'none') delete aiKeysMap[providerId];
-    else aiKeysMap[providerId] = keyVal;
+    aiKeysMap = updateAIKeysMap(getAIKeysMap(), providerId, keyVal);
     let modelMap = {};
     try {
       if (window.Vault && Vault.isUnlocked()) modelMap = Vault.snapshot().aiModels || {};
@@ -269,7 +267,7 @@ function initKeys() {
     aiIn.value = aiKeysMap[providerId] || '';
     checkWarning();
 
-    if (providerId === 'gemini') {
+    if (window.ModelRegistry && prov && (prov.auth !== 'none' || prov.optionalKey)) {
       await updateProvider({ force: true }); // key nova: ignora fallback cacheado
     }
 

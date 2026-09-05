@@ -299,6 +299,15 @@ function getAIKeysMap() {
   } catch(e) {}
   return {};
 }
+
+function updateAIKeysMap(current, providerId, keyValue) {
+  const next = Object.assign({}, current || {});
+  const prov = AI_PROVIDERS[providerId];
+  if (prov && prov.auth === 'none' && !prov.optionalKey) delete next[providerId];
+  else next[providerId] = keyValue || '';
+  return next;
+}
+
 function getAIKey(providerId = getAIProvider()) {
   if (isVaultLocked()) return '';
   const p = providerId || getAIProvider();
