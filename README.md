@@ -1,222 +1,156 @@
-# 🔍 Busca Sem Filtro — YouTube Analytics Pro
+# Busca Sem Filtro
 
-**Analisador profissional de YouTube para criadores de conteúdo dark/faceless.** Dados reais da API do YouTube + análises de IA para descobrir o que funciona, quem está crescendo e como replicar.
+[![CI](https://github.com/darksemfiltro/Buscador-Sem-Filtro/actions/workflows/ci.yml/badge.svg)](https://github.com/darksemfiltro/Buscador-Sem-Filtro/actions/workflows/ci.yml)
+[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-22d3b4.svg)](LICENSE)
 
-> ⚠️ **Aviso:** Este é um projeto **open source**. Proteja suas chaves de API — nunca compartilhe suas chaves em público.
+Analytics e engenharia reversa para canais dark e faceless no YouTube. O aplicativo consulta dados reais da YouTube Data API v3 e usa IA, de forma opcional, para gerar análises de mercado, conteúdo e SEO.
 
----
+O projeto roda inteiramente no navegador, sem backend e sem etapa de build.
 
-## 🚀 Como Começar
+[Tutorial em vídeo](https://youtu.be/PJHSW_xPsLA) · [Canal Dark Sem Filtro](https://www.youtube.com/@DarkSemFiltro) · [Comunidade no Discord](https://discord.gg/va64qDkEZR)
 
-### 1. Clone ou baixe o projeto
+## Recursos
 
-```bash
-git clone https://github.com/darksemfiltro/buscador-sem-filtro.git
-cd buscador-sem-filtro
-```
+| Área | O que oferece |
+| --- | --- |
+| Pesquisa avançada | Busca por palavra-chave, filtros de formato, duração, data, país, idioma e tamanho do canal; geração de palavras-chave com IA; exportação em PDF. |
+| Em alta | Rankings por país e categoria, filtros para Shorts e vídeos longos, ordenação por desempenho e leitura de oportunidades com IA. |
+| Canais | Consulta por `@handle`, URL ou ID, métricas do canal, histórico de vídeos e dossiê estratégico gerado por IA. |
+| Vídeos | Métricas, tags, descrição, duração, download da thumbnail e análise de conteúdo com IA. |
+| Comparação | Dois canais lado a lado, com indicadores de alcance, frequência, engajamento e relatório comparativo. |
+| Favoritos e exportação | Canais e vídeos salvos no navegador, exportáveis em TXT ou PDF. |
 
-### 2. Abra no navegador
+As consultas de dados funcionam sem IA. Os relatórios, diagnósticos e sugestões gerados dependem de um dos provedores configurados.
 
-A forma mais simples é abrir o `index.html` diretamente no navegador.
+## Início rápido
 
-**Para evitar restrições de CORS do protocolo `file://`, use um servidor HTTP local:**
+### Requisitos
 
-```bash
-# Instale o Node.js (https://nodejs.org), depois:
-npx serve .
-```
+- Navegador moderno com Web Crypto API e `localStorage`.
+- Chave da YouTube Data API v3.
+- Python, Node.js ou outro servidor HTTP local.
 
-Acesse `http://localhost:3000`
-
-### 3. Configure suas chaves de API
-
-Clique no ícone ⚙️ no canto superior direito e preencha:
-
-| Chave | Como obter |
-|---|---|
-| **YouTube Data API v3** | [Google Cloud Console](https://console.cloud.google.com) → APIs → YouTube Data API v3 |
-| **LLM7.io** (recomendado) | [LLM7.io](https://llm7.io) — gratuito com limite generoso |
-| **OpenRouter** | [OpenRouter.ai](https://openrouter.ai) — diversos modelos |
-| **Gemini (Google AI)** | [Google AI Studio](https://aistudio.google.com) |
-| **Hugging Face** | [Hugging Face](https://huggingface.co/settings/tokens) — inference providers |
-
----
-
-## 🎯 Funcionalidades
-
-### Pesquisa Avançada
-Busque vídeos por palavra-chave com filtros poderosos:
-- **Formato:** Todos / Longos (>1min) / Shorts
-- **Duração:** <5min / 5-15min / 15-60min / >60min
-- **Inscritos do canal:** Até 1K, 1-10K, 10-100K, 100K-1M+
-- **Views totais do canal:** Filtro por tamanho do canal
-- **Data de publicação:** Última semana, mês, ano
-- **País/Região:** Simula trending de qualquer país
-- **Idioma:** relevanceLanguage para refinar resultados
-- Gerador de palavras-chave com IA
-- Exportação em PDF dos resultados
-
-### 📊 Em Alta (Trending)
-- Rankings de vídeos em alta por país e categoria
-- Filtros por formato (Shorts / Longos)
-- Ordenação por views, engajamento, data
-- Análise de IA com oportunidades faceless
-
-### ⚔️ Comparar Concorrentes
-Compare dois canais lado a lado com métricas avançadas:
-- Inscritos, views totais, vídeos publicados
-- Views/video, inscritos/video
-- Engajamento médio, % de Shorts
-- Vendas/semana estimadas
-- Geração de relatório comparativo com IA
-
-### 📺 Análise de Canal
-Busque qualquer canal por @handle, URL ou ID:
-- Estatísticas completas (subs, views, vídeos)
-- Banner e avatar do canal
-- Engajamento médio, taxa sub/view
-- Dossiê gerado por IA com estratégia de posicionamento
-
-### 🎬 Análise de Vídeo
-Informe a URL de qualquer vídeo:
-- Views, likes, comentários, engajamento
-- Tags, descrição, duração
-- Download da thumbnail em máxima qualidade
-- Engenharia reversa do conteúdo com IA
-
-### 📅 Histórico do Canal
-Veja todos os vídeos de um canal com filtros:
-- Por formato (Shorts / Longos)
-- Por período
-- Ordenação por views, likes, engajamento
-
-### ⭐ Favoritos
-Salve canais e vídeos favoritos para consulta posterior:
-- Organização separada (Canais vs Vídeos)
-- Exportação em TXT e PDF
-
-### 🧠 Gerador de Palavras-Chave com IA
-Receba ideias de palavras-chave automaticamente:
-- 6 nichos pré-configurados (História, Música, Estoicismo, etc.)
-- Geração com IA personalizada por idioma e país-alvo
-- 20+ idiomas e mercados disponíveis
-
----
-
-## 📋 Pré-requisitos de API
-
-### YouTube Data API v3 (obrigatório)
-
-1. Acesse [Google Cloud Console](https://console.cloud.google.com)
-2. Crie um projeto → APIs e Serviços → Biblioteca
-3. Busque "YouTube Data API v3" → Ativar
-4. Credenciais → Criar Credenciais → Chave de API
-5. **Importante:** Restrinja a chave por domínio/IP para segurança
-
-**Cotas gratuitas:**
-- 10.000 unidades/dia (busca)
-- 1.000 unidades/dia (listagem de trending)
-- Cada busca de canal custa **1 unidade**
-- Cada trending custa **~100 unidades**
-
-### Chave de IA (opcional, mas recomendado)
-
-Sem ela você consegue usar todas as ferramentas de dados, mas não os relatórios gerados por IA.
-
-| Provedor | Custo | Link |
-|---|---|---|
-| **LLM7.io** (recomendado) | Gratuito com limite | [llm7.io](https://llm7.io) |
-| OpenRouter | Pay-per-use | [openrouter.ai](https://openrouter.ai) |
-| Gemini (Google AI) | Gratuito com limite | [aistudio.google.com](https://aistudio.google.com) |
-| Hugging Face | Gratuito com limite | [huggingface.co](https://huggingface.co/settings/tokens) |
-
----
-
-## 🛠️ Rodando Localmente
-
-### Servidor HTTP (recomendado)
+### Instalação
 
 ```bash
-# Com npx (não precisa instalar nada)
-npx serve .
-
-# Com Python
+git clone https://github.com/darksemfiltro/Buscador-Sem-Filtro.git
+cd Buscador-Sem-Filtro
 python -m http.server 8080
-
-# Com PHP
-php -S localhost:8080
 ```
 
-As chaves são configuradas pela interface. Ao salvar pela primeira vez, o app solicita uma senha mestra e cria um cofre cifrado no navegador.
+Abra [http://localhost:8080](http://localhost:8080). Se preferir Node.js, execute `npx serve .` e use o endereço exibido no terminal.
 
-### Validação local
+Use um servidor HTTP. A abertura direta do `index.html` pelo protocolo `file://` pode bloquear requisições externas.
 
-Com Node.js 20 ou superior:
+## Configuração das APIs
+
+### YouTube Data API v3
+
+A chave do YouTube é obrigatória para buscas e análises:
+
+1. Abra a [YouTube Data API v3 no Google Cloud Console](https://console.cloud.google.com/apis/library/youtube.googleapis.com).
+2. Selecione ou crie um projeto e ative a API.
+3. Crie uma chave em **APIs e serviços > Credenciais**.
+4. Restrinja a chave à YouTube Data API v3 e aos referenciadores HTTP que executarão o aplicativo.
+5. Cole a chave no campo **YouTube API Key** da interface.
+
+O Google aplica cotas por projeto. Buscas, detalhes e rankings consomem valores diferentes; acompanhe o uso no Google Cloud Console.
+
+### Provedor de IA
+
+A IA é opcional. Escolha um provedor na interface:
+
+| Provedor | Credencial | Observação |
+| --- | --- | --- |
+| [Gemini](https://aistudio.google.com/app/apikey) | Chave obrigatória | O aplicativo lista modelos Flash e Gemma compatíveis com `generateContent`. |
+| [OpenRouter](https://openrouter.ai/keys) | Chave obrigatória | Apenas modelos com o sufixo `:free` aparecem na lista. |
+| [Hugging Face](https://huggingface.co/settings/tokens) | Token obrigatório | O token precisa permitir chamadas aos Inference Providers. |
+| [LLM7.io](https://llm7.io) | Token opcional | Pode funcionar de forma anônima; o token libera os limites associados à conta. |
+
+Quando possível, a lista de modelos é consultada no provedor e mantida em cache por 24 horas. Se a consulta falhar, o aplicativo usa uma lista local de fallback. O botão de atualização força uma nova consulta.
+
+### Primeiro acesso
+
+1. Informe a chave do YouTube.
+2. Se quiser usar IA, selecione um provedor, informe a credencial quando exigida e escolha um modelo.
+3. Clique em **Salvar Chaves**.
+4. Crie a senha mestra solicitada pelo cofre.
+5. Use o botão **✓** (**Testar Conexões**) para validar a configuração.
+
+Não existem arquivos `.env` neste fluxo. As credenciais são configuradas somente pela interface.
+
+## Segurança e privacidade
+
+- O projeto não possui servidor próprio. O navegador envia cada chave apenas à API correspondente.
+- O cofre cifra as credenciais com AES-GCM de 256 bits. A chave criptográfica é derivada da senha mestra com PBKDF2-SHA-256 e 210.000 iterações.
+- O `localStorage` guarda somente o conteúdo cifrado do cofre. A chave derivada e os dados descriptografados ficam em memória enquanto o cofre está aberto.
+- O cofre bloqueia após 15 minutos, limpa os campos de credenciais e exige a senha mestra novamente.
+- A senha mestra não possui recuperação. Limpar os dados do site remove o cofre e os dados locais.
+- Favoritos, preferências, cache de modelos e contadores permanecem no perfil do navegador; não há sincronização entre dispositivos.
+
+Antes de publicar sua própria instância, revise os scripts externos carregados por `index.html` e aplique restrições de origem e API às credenciais.
+
+## Estrutura do projeto
+
+```text
+Buscador-Sem-Filtro/
+├── .github/workflows/ci.yml  # Pipeline de integração contínua
+├── css/style.css             # Layout responsivo e tema visual
+├── docs/SQLITE-FUTURO.md     # Proposta de persistência futura
+├── img/bg.png                # Imagem usada pela interface
+├── js/
+│   ├── ai.js                 # Prompts e chamadas aos provedores de IA
+│   ├── api.js                # Integração com a YouTube Data API v3
+│   ├── app.js                # Interface, navegação e casos de uso
+│   ├── models.js             # Descoberta, filtro e cache de modelos
+│   ├── pdf.js                # Relatórios em PDF
+│   ├── utils.js              # Provedores, armazenamento e utilitários
+│   └── vault.js              # Cofre de credenciais com Web Crypto
+├── scripts/check-js-syntax.cjs
+├── tests/                    # Testes com o runner nativo do Node.js
+├── index.html                # Ponto de entrada do aplicativo
+├── package.json              # Comandos de validação
+└── LICENSE                   # Licença MIT
+```
+
+Os arquivos seguem JavaScript puro, HTML e CSS. As dependências usadas pela interface são carregadas pelo navegador.
+
+## Desenvolvimento e testes
+
+Use Node.js 20 ou superior:
 
 ```bash
 npm ci
 npm run check
 ```
 
-O comando verifica a sintaxe dos scripts e executa os testes unitários. A mesma validação roda no GitHub Actions em cada push e pull request.
+Comandos disponíveis:
 
----
+| Comando | Validação |
+| --- | --- |
+| `npm run check:syntax` | Verifica a sintaxe dos arquivos JavaScript. |
+| `npm test` | Executa testes unitários e de integração com `node:test`. |
+| `npm run check` | Executa as duas etapas anteriores. |
 
-## 📁 Estrutura do Projeto
+O workflow [CI](.github/workflows/ci.yml) executa `npm run check` em todo push e pull request.
 
-```
-buscador-sem-filtro/
-├── index.html          # Interface principal
-├── css/
-│   └── style.css       # Estilos (dark theme)
-├── js/
-│   ├── app.js          # Lógica da interface e abas
-│   ├── api.js          # Comunicação com YouTube Data API v3
-│   ├── ai.js           # Comunicação com provedores de IA
-│   ├── models.js       # Descoberta e cache de modelos
-│   ├── vault.js        # Cofre WebCrypto para as chaves
-│   ├── utils.js        # Funções auxiliares
-│   └── pdf.js          # Geração de relatórios em PDF
-├── img/
-│   └── bg.png         # Background do hero (opcional)
-├── docs/
-│   └── SQLITE-FUTURO.md
-└── .gitignore         # Arquivos ignorados pelo Git
-```
+## Limitações conhecidas
 
----
+- A cota da YouTube Data API pode impedir novas consultas até a renovação do período de uso.
+- Modelos, preços e limites pertencem aos provedores e podem mudar sem atualização do projeto.
+- Extensões, bloqueadores, políticas de rede e CORS podem impedir chamadas diretas feitas pelo navegador.
+- O armazenamento é local ao perfil do navegador. Não há login, backup automático ou sincronização.
+- As análises de IA podem conter erros e devem ser conferidas antes de orientar decisões de conteúdo.
 
-## 🔒 Segurança
+## Como contribuir
 
-- **Nenhuma chave é enviada para nossos servidores.** Toda comunicação é direta entre seu navegador e as APIs.
-- As chaves são cifradas com PBKDF2 + AES-GCM antes de serem gravadas no `localStorage`.
-- O cofre é bloqueado automaticamente após 15 minutos e pode ser apagado pela interface.
-- `.gitignore` configurado para nunca commitar `keys.txt` ou arquivos sensíveis.
+1. Faça um fork do repositório.
+2. Crie uma branch para a mudança.
+3. Execute `npm run check`.
+4. Envie um pull request com o problema resolvido e a forma de validação.
 
----
+Relatos de falha devem informar o navegador, a operação executada e a mensagem exibida, sem incluir chaves de API.
 
-## 🤝 Contribuir
+## Licença
 
-1. Fork o repositório
-2. Crie uma branch: `git checkout -b minha-feature`
-3. Commit: `git commit -m 'Adiciona nova funcionalidade'`
-4. Push: `git push origin minha-feature`
-5. Abra um Pull Request
-
----
-
-## 📄 Licença
-
-Este projeto é distribuído sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
----
-
-## ⚠️ Limitações Conhecidas
-
-- **Cota da YouTube API:** O uso gratuito é limitado. Para projetos maiores, considere migrar para uma conta paga.
-- **APIs de terceiros:** modelos e limites podem mudar sem aviso; use o botão de atualização da lista.
-- **Execução local:** prefira um servidor HTTP, pois `file://` pode bloquear chamadas externas no navegador.
-
----
-
-**Made with 🔥 for the creator economy.**
+Distribuído sob a [licença MIT](LICENSE).
