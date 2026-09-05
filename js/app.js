@@ -86,7 +86,7 @@ function initKeys() {
   const keyLabel = document.getElementById('aiKeyLabel');
 
   // Populate provider dropdown from AI_PROVIDERS (idempotente: ignora 2º init)
-  const customOrder = ['llm7', 'openrouter', 'huggingface', 'gemini', 'ollama_cloud', 'nvidia'];
+  const customOrder = ['llm7', 'openrouter', 'huggingface', 'gemini'];
   if (provSel.options.length === 0) {
   Object.entries(AI_PROVIDERS).sort((a,b) => {
     let ia = customOrder.indexOf(a[0]); let ib = customOrder.indexOf(b[0]);
@@ -289,34 +289,7 @@ function initKeys() {
       const model = getSelectedModel();
       if (!model) throw new Error('Nenhum modelo de IA selecionado.');
       
-      const provider = getAIProvider();
-      if (provider === 'ollama_cloud') {
-        const prov = AI_PROVIDERS.ollama_cloud;
-        const url = prov.endpoint();
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getAIKey() },
-            body: JSON.stringify({ model, messages:[{role:'user',content:'OK'}], max_tokens:10 }),
-            signal: controller.signal
-          });
-          clearTimeout(timeout);
-          if (!res.ok) {
-            const err = await res.json().catch(()=>({}));
-            throw new Error('Ollama Cloud erro ' + res.status + ': ' + (err.error?.message || res.statusText));
-          }
-        } catch(e) {
-          clearTimeout(timeout);
-          if (e.name === 'AbortError') {
-            throw new Error('Ollama Cloud nao respondeu em 30s. Verifique sua chave de API e Conexão com cloud.ollama.com');
-          }
-          throw e;
-        }
-      } else {
-        await callAI('OK');
-      }
+      await callAI('OK');
       
       closeModal();
       toast('Tudo funcionando perfeitamente!', 'success');
@@ -511,7 +484,7 @@ function renderCanal(ch, el) {
       openReportPage('analise: '+ch.title, `${fmtNum(ch.subs)} subs · ${fmtNum(ch.views)} views · ${vpw} vids/sem`, md2html(t), ctx, newWin);
     } catch(e) { 
         if (newWin && !newWin.closed) newWin.close();
-        modalError('Erro na análise IA', e.message || 'Erro desconhecido. Verifique sua chave de API e Conexão com cloud.ollama.com.'); 
+        modalError('Erro na análise IA', e.message || 'Erro desconhecido. Verifique a chave, o modelo e sua conexão.');
     }
     };
   });
@@ -590,7 +563,7 @@ function renderVideo(v, el) {
       openReportPage('análise: '+v.title, `${fmtNum(v.views)} views · ${v.eng}% eng · ${v.durStr}`, md2html(t), ctx, newWin);
     } catch(e) { 
         if (newWin && !newWin.closed) newWin.close();
-        modalError('Erro na análise IA', e.message || 'Erro desconhecido. Verifique sua chave de API e Conexão com cloud.ollama.com.'); 
+        modalError('Erro na análise IA', e.message || 'Erro desconhecido. Verifique a chave, o modelo e sua conexão.');
     }
   };
   });
