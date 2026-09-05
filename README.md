@@ -2,7 +2,7 @@
 
 **Analisador profissional de YouTube para criadores de conteúdo dark/faceless.** Dados reais da API do YouTube + análises de IA para descobrir o que funciona, quem está crescendo e como replicar.
 
-> ⚠️ **Aviso:** Este é um projeto **open source**. Proteja suas chaves de API — nunca compartilhe suas chaves em públicos.
+> ⚠️ **Aviso:** Este é um projeto **open source**. Proteja suas chaves de API — nunca compartilhe suas chaves em público.
 
 ---
 
@@ -19,7 +19,7 @@ cd buscador-sem-filtro
 
 A forma mais simples é abrir o `index.html` diretamente no navegador.
 
-**Para funcionalidades completas (especialmente Ollama local):**
+**Para evitar restrições de CORS do protocolo `file://`, use um servidor HTTP local:**
 
 ```bash
 # Instale o Node.js (https://nodejs.org), depois:
@@ -38,8 +38,7 @@ Clique no ícone ⚙️ no canto superior direito e preencha:
 | **LLM7.io** (recomendado) | [LLM7.io](https://llm7.io) — gratuito com limite generoso |
 | **OpenRouter** | [OpenRouter.ai](https://openrouter.ai) — diversos modelos |
 | **Gemini (Google AI)** | [Google AI Studio](https://aistudio.google.com) |
-
-> 📖 Guia completo para Ollama: leia o arquivo [GUIA_OLLAMA.md](GUIA_OLLAMA.md).
+| **Hugging Face** | [Hugging Face](https://huggingface.co/settings/tokens) — inference providers |
 
 ---
 
@@ -129,6 +128,7 @@ Sem ela você consegue usar todas as ferramentas de dados, mas não os relatóri
 | **LLM7.io** (recomendado) | Gratuito com limite | [llm7.io](https://llm7.io) |
 | OpenRouter | Pay-per-use | [openrouter.ai](https://openrouter.ai) |
 | Gemini (Google AI) | Gratuito com limite | [aistudio.google.com](https://aistudio.google.com) |
+| Hugging Face | Gratuito com limite | [huggingface.co](https://huggingface.co/settings/tokens) |
 
 ---
 
@@ -147,15 +147,7 @@ python -m http.server 8080
 php -S localhost:8080
 ```
 
-### Variáveis de ambiente (opcional)
-
-Se quiser evitar digitar chaves toda vez, crie um arquivo `.env`:
-
-```env
-YOUTUBE_API_KEY= sua_chave_aqui
-AI_PROVIDER= llm7
-AI_API_KEY= sua_chave_aqui
-```
+As chaves são configuradas pela interface. Ao salvar pela primeira vez, o app solicita uma senha mestra e cria um cofre cifrado no navegador.
 
 ---
 
@@ -168,14 +160,16 @@ buscador-sem-filtro/
 │   └── style.css       # Estilos (dark theme)
 ├── js/
 │   ├── app.js          # Lógica da interface e abas
-│   ├── api.js         # Comunicação com YouTube Data API v3
-│   ├── ai.js          # Comunicação com provedores de IA
-│   ├── utils.js       # Funções auxiliares (formatação, favoritos, etc.)
-│   └── pdf.js         # Geração de relatórios em PDF
+│   ├── api.js          # Comunicação com YouTube Data API v3
+│   ├── ai.js           # Comunicação com provedores de IA
+│   ├── models.js       # Descoberta e cache de modelos
+│   ├── vault.js        # Cofre WebCrypto para as chaves
+│   ├── utils.js        # Funções auxiliares
+│   └── pdf.js          # Geração de relatórios em PDF
 ├── img/
 │   └── bg.png         # Background do hero (opcional)
-├── GUIA_OLLAMA.md     # Guia completo para Ollama local
-├── keys.txt.example   # Exemplo de formato de chaves
+├── docs/
+│   └── SQLITE-FUTURO.md
 └── .gitignore         # Arquivos ignorados pelo Git
 ```
 
@@ -184,7 +178,8 @@ buscador-sem-filtro/
 ## 🔒 Segurança
 
 - **Nenhuma chave é enviada para nossos servidores.** Toda comunicação é direta entre seu navegador e as APIs.
-- Armazenamento local (localStorage) — você pode limpar a qualquer momento.
+- As chaves são cifradas com PBKDF2 + AES-GCM antes de serem gravadas no `localStorage`.
+- O cofre é bloqueado automaticamente após 15 minutos e pode ser apagado pela interface.
 - `.gitignore` configurado para nunca commitar `keys.txt` ou arquivos sensíveis.
 
 ---
@@ -208,8 +203,8 @@ Este projeto é distribuído sob a licença MIT. Veja o arquivo `LICENSE` para m
 ## ⚠️ Limitações Conhecidas
 
 - **Cota da YouTube API:** O uso gratuito é limitado. Para projetos maiores, considere migrar para uma conta paga.
-- **Ollama local:** Requer hardware adequado. Modelos maiores (7B+) precisam de 8GB+ de RAM.
-- **Favicon 404:** Se abrir pelo sistema de arquivos (`file://`), o navegador pode pedir um favicon. Ignore — não afeta funcionalidades.
+- **APIs de terceiros:** modelos e limites podem mudar sem aviso; use o botão de atualização da lista.
+- **Execução local:** prefira um servidor HTTP, pois `file://` pode bloquear chamadas externas no navegador.
 
 ---
 
