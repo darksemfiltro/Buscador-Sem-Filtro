@@ -149,6 +149,17 @@ php -S localhost:8080
 
 As chaves são configuradas pela interface. Ao salvar pela primeira vez, o app solicita uma senha mestra e cria um cofre cifrado no navegador.
 
+### Validação local
+
+Com Node.js 20 ou superior:
+
+```bash
+npm ci
+npm run check
+```
+
+O comando verifica a sintaxe dos scripts e executa os testes unitários. A mesma validação roda no GitHub Actions em cada push e pull request.
+
 ---
 
 ## 📁 Estrutura do Projeto
